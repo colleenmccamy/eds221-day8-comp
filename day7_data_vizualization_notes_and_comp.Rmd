@@ -1,0 +1,192 @@
+---
+title: "Data Visualization Practice & Notes"
+author: "Colleen McCamy"
+date: "2022-08-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE)
+
+
+library(tidyverse)
+library(here)
+library(janitor)
+
+# installing for ggplot
+
+library(patchwork)
+library(ggrepel)
+library(gghighlight)
+library(paletteer)
+library(ggExtra)
+library(ggbeeswarm)
+library(gapminder)
+library(forcats)
+
+# library(sf)
+
+```
+
+
+### Reading in the lizard data
+
+```{r}
+
+lizards <- read_csv(here("data_tidy", "lizards.csv"))
+
+```
+
+
+### GG Plot Using Data from Lizards
+
+```{r}
+
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point()
+
+# can't switch to any graph - it must be compatible with the data that you have
+
+```
+
+
+Histogram of total lengths of all of the lizards in the data set
+
+```{r}
+
+plot_1_histogram <- ggplot(data = lizards, aes(x = total_length)) +
+  geom_histogram(color= "#6E24D3", 
+                 fill = "#BE99F0",
+                 size = 0.5,
+                 linetype = "dotted") +
+  labs(x = "Total Length (mm)", y = "Count of Lizards") 
+
+plot_1_histogram
+
+# size refers to line width
+
+# you don't want to change an aesthetic based on a constant in aes will map on to a variable value and bring up a legend, putting an extra legend that is mapped on to a variable but doesn't have meaning of what it is expected
+
+```
+
+Fill and color aesthetics with points
+
+```{r}
+
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point(
+    shape = 22,
+    fill = "#6FF3BD",
+    color = "#138560",
+    size = 8,
+    alpha = 0.4
+  )
+
+# alpha for transparence 0 is completely transparent 1 is opaque
+
+```
+
+Mapping Aesthetic based on variables
+
+```{r}
+
+ggplot(data = lizards, 
+       aes(x = total_length, 
+           y = weight)) + 
+  geom_point(aes(color = common_name, 
+                 size = total_length),
+             alpha = 0.5) +
+  theme_minimal()
+
+```
+
+Faceting plots
+
+
+```{r}
+
+ggplot(data = lizards, 
+       aes(x = total_length, 
+           y = weight)) + 
+  geom_point(color = "#178893",
+             alpha = 0.5) +
+  facet_wrap(~common_name, scales = "free")
+
+# faceting wraps the default is that the scale is the same for the x and y axis, however if you decide you don't care if the scales are not the same you can do as , scales = "free"
+
+```
+
+### Reordering things
+
+```{r}
+
+#finding the count of the lizards via group by and summarize
+
+lizards_count <- lizards |> 
+  group_by(common_name) |> 
+  summarize(
+    counts = n()
+    )
+
+# there is another way to do the same thing as above with a wrapper
+
+lizards_count <- lizards |> 
+  count(common_name)
+
+# can do multiple variables at once as below
+
+lizards_counts_ex <- lizards |> 
+  count(common_name, site)
+
+```
+
+# Column graph that plots count or the value n - geom bar will do the counts of groups for you
+
+```{r}
+
+# almost always use geom_col to do a count plot
+
+ggplot(data = lizards_count, 
+       aes( y = fct_reorder(common_name, n),
+            x = n)) +
+  geom_col(fill = "#178893") + 
+  labs(x = "Count",
+       y = "Lizard Common Name")
+
+# default in ggplot with a character variable is to be plotted in alphabetical order 
+
+# for a character variable cannot specify the order things appear in
+
+# using a new function - allow you to reorder things, don't want to manually code in the orders
+
+# using function `fct_reorder()` 
+
+# taking common_name to make it a factor and need to tell it the variable to determine the order
+
+```
+
+### Creating scatterplots faceted by species for total length vs. weight. The color and shape of points should differ based on species(common name.) Change the theme and Make each faceted panel have flexible axis limits
+
+```{r}
+
+ggplot(data = lizards, aes(x = total_length, 
+                           y = weight)) +
+  geom_point(aes(color = common_name), 
+             alpha = 0.5,
+             shape = 22) + 
+  facet_wrap(~common_name, scales = "free") +
+  theme_minimal() +
+  labs( x = "Total Length (mm)", y = "Weight (grams)", 
+        title = "Jornada Basin Lizard Sizes",
+        subtitle = "All lizards follow the standard length-weight relationship, weith Western Whiptails being largest",
+        caption = "Data : Jordana Basin LTER, CCBY")
+
+# can manually create a vector for shapes shape = c(22, 14, 5, 13, 17)
+
+# for facet wrap free can do scales = "free.x" or scales = "free.y" to only have it free in one direction
+
+```
+
+
