@@ -25,8 +25,7 @@ library(ggExtra)
 library(ggbeeswarm)
 library(gapminder)
 library(forcats)
-
-# library(sf)
+library(sf)
 
 ```
 
@@ -187,6 +186,211 @@ ggplot(data = lizards, aes(x = total_length,
 
 # for facet wrap free can do scales = "free.x" or scales = "free.y" to only have it free in one direction
 
+```
+
+## Using Scales to Add Customizations
+
+```{r}
+
+ggplot(data = lizards, aes(x = total_length, 
+                           y = weight)) +
+  geom_point(aes(color = weight)) +
+  scale_color_gradientn(colors = c("magenta", "#FD52C9", "#20B95D", "#144591", "dodgerblue"))
+
+
+# scale_color_gradient = two colors
+# scale_color_gradient = colors = c()
+
+```
+
+
+
+
+```{r}
+
+ggplot(data = lizards, aes(x = total_length, 
+                           y = weight)) +
+  geom_point(aes(color = weight)) +
+  scale_color_steps(low = "#EEC435", high = "#35EE7B")
+
+#scale_color_steps = based on steps of breakpoints ^ automatic ones
+
+
+ggplot(data = lizards, aes(x = total_length, 
+                           y = weight)) +
+  geom_point(aes(color = total_length)) +
+  scale_color_steps2(low = "#EEC435", 
+                     mid = "#4CAD2C",
+                     high = "#360EBF",
+                     midpoint = 150,
+                     breaks = c(50, 75, 150, 180, 220, 280))
+
+#scale_color_steps2 = tell what the high, low and mid values are for a diverting color scheme - creating a breakpoints at the different breaks
+
+
+ggplot(data = lizards, aes(x = total_length, 
+                           y = weight)) +
+  geom_point(aes(color = total_length)) +
+  scale_color_stepsn(colors = c("orange", "red", "purple"),
+                     breaks = seq(from = 0, to = 300, by = 60))
+
+# instead of divering color schemes create sequences for break points
+# what if this changes and you hard code these break points could say sequence and maximum value and divide by five and sequence along that for the iteration - do this outside of ggplot to then call it back in gg plot
+
+# each addition is adding a new layer on to a ggplot so it looks a the most recent line of code for instance the scale is in reference to the point geom and if there was a line geom we would need to have another scale after the line plot
+
+# should have a graph via a function - create a theme in gg plot and 
+
+```
+
+## Creating a function to use ggplot
+
+```{r}
+
+# you can create a theme in ggplot and make a custom theme and then include in a function and apply that function directly to a graph
+
+
+```
+
+
+## Palletteer & Factor Reorder `fct_reorder()`
+
+```{r}
+
+# palletts are just a vector of custom colors and items
+# pallette collects all of the different pallettes so you can use them
+
+
+# could make sense to have the version of the data stored in that order
+lizards_median <- lizards |> 
+  mutate(common_name = fct_reorder(common_name, 
+                                   total_length, 
+                                   .fun = median))
+
+# this is creating a new column overwriting an exisiting column, recast column name as a factor and then to put those in order based on the median total length based on the median factor
+
+
+ggplot(data = lizards, aes(x = total_length, y = common_name)) +
+  geom_boxplot(aes(fill = common_name)) +
+  theme_minimal()
+
+
+ggplot(data = lizards_median, aes(y = common_name, x = total_length)) +
+  geom_boxplot(aes(fill = common_name), show.legend = FALSE) +
+  scale_fill_paletteer_d(palette = "LaCroixColoR::Pamplemousse") +
+  theme_minimal()
+
+# reorder from high to low and change the color scheme
+# for the palette aggregate package of color palettes it builds into it- you need to identify the package and then package view to see more do View(palette_d_names)
+
+```
+
+## Making an awesomely awful graph
+
+```{r}
+
+ggplot(data = lizards, aes(x = total_length, 
+                           y = weight)) +
+  geom_point(aes(color = weight)) +
+  theme(panel.grid.major.x = element_line(color = "red"),
+        panel.grid.minor.y = element_blank(), 
+        axis.title = element_text(color = "purple", size = 10),
+        axis.text.y = element_text(color = "green"),
+        text = element_text(size = 18),
+        panel.background = element_rect(color = "purple", 
+                                        fill = "yellow")
+        )
+
+
+# theme the highest element of resolution will be the one that will be used - for instance if you edit the font size for all text and have a title for x axis
+
+# element_rectangle for the graph
+
+```
+
+## Adding custom annotations and adding a line
+
+```{r}
+
+ggplot(data = lizards, aes(x = total_length, 
+                           y = weight)) +
+  geom_point(aes(color = weight)) +
+  theme_minimal() +
+  annotate("text", x = 300, y = 50, label = "Wooooo", color = "purple") +
+  geom_vline(xintercept = 250, 
+             linetyple = "dashed", 
+             color = "orange", 
+             size = 4)
+        )
+
+# annotate ( say what you want, then where you want and then what to say and the color)
+
+# customizing things are often in themes
+
+# geom_vline - to add a line in the graph say where you want it, line type, color, size, etc
+
+```
+
+
+## Making repulusive labels with `ggrepel` and gapminder
+
+
+```{r}
+
+wws_lizards <- lizards |> 
+  filter(common_name == "western whiptail", 
+         site == "sand")
+
+ggplot(data = wws_lizards, aes(x = total_length, 
+                           y = weight)) +
+  geom_point() +
+  geom_text_repel(aes(label = toe_num))
+
+# you can use geom_text to add labels, default for geom text to center everything horizontally and vertically over the coordinate for that valye, which doesn't work well for having the point and the label with geom_text()
+
+# geom_text_repel() this will update the formatting of the geom_text and will make the default to have automatic repulsion away from the point so that you can still read the values
+
+```
+
+### using `gghighlight()` and `geom_text_repel()`
+
+```{r}
+
+# doing a filter and then piping straight into gg plot
+
+gapminder |> 
+  filter(year == 2022 & continent == "Europe") |> 
+  ggplot(aes(x = gdpPercap, y = lifeExp)) + 
+  geom_point() +
+  geom_text_repel(aes(label = country), size = 3)
+
+# using h
+
+ggplot(data = wws_lizards, aes(x = total_length, 
+                           y = weight)) +
+  geom_point() +
+  gghighlight(toe_num == 250, label_key = toe_num)
+
+# gghighlight first is logical askings is this true, then if it is truen then add a label to it
+
+```
+
+## Making a map using spatial data
+
+```{r}
+
+jornada_veg <- read_sf(here::here("data_raw", "spatial_vegetation", "doc.kml"))
+
+# even with different types of data you can use ggplot in similar ways - don't need to specify x and y since it will recognize the spatial data
+
+ggplot() +
+  geom_sf(data = jornada_veg,
+          aes(fill = Name),
+          color = NA) +
+  theme_minimal() +
+  scale_fill_paletteer_d(palette = "ggthemes::manyeys")
+# can't use read csv cause it is not a csv file read_sf -
+# sf = simple figures with all of you attributes and the spatial information stays stuck to the data
 ```
 
 
