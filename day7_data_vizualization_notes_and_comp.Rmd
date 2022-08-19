@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE,
 library(tidyverse)
 library(here)
 library(janitor)
+library(ggExtra)
 
 # installing for ggplot
 
@@ -26,6 +27,7 @@ library(ggbeeswarm)
 library(gapminder)
 library(forcats)
 library(sf)
+library(lubridate)
 
 ```
 
@@ -35,6 +37,89 @@ library(sf)
 ```{r}
 
 lizards <- read_csv(here("data_tidy", "lizards.csv"))
+
+```
+
+
+## Making a heat map
+
+```{r}
+
+# Data Wrangling
+
+lizard_counts <- lizards |> 
+  mutate(date = mdy(date)) |> 
+  count(year = lubridate::year(date), common_name) |> 
+  drop_na()
+
+  # doing both steps in one column
+  # drop_na - drops rows with missing values
+```
+
+
+```{r}
+
+ggplot(data = lizard_counts, aes(x = year, y = common_name)) +
+  geom_tile(aes(fill = n), show.legend = FALSE) + 
+  geom_text(aes(label = n), color = "white", size = 3) +
+  scale_fill_gradientn(colours = c("navy", 'red', "orange", "yellow")
+  )
+
+
+# geom_text is combining a table and a plot with  adding the signs
+# changing the color gradient with scale_fill_gradientn to be able to determine the number of colors to use
+
+```
+
+
+## Making a Beeswarm plot
+
+```{r}
+
+# data wrangling
+
+whiptails <- lizards |> 
+  filter(common_name == "western whiptail") |> 
+  drop_na(total_length, weight)
+
+# making the beeswarm plot
+whiptail_bee <- ggplot(data = whiptails, aes(x = sex, y = weight)) +
+  geom_beeswarm() +
+  geom_boxplot(fill = NA)
+
+```
+
+# Making a Marginal Plot
+
+```{r}
+
+
+whiptails <- lizards |> 
+  filter(common_name == "western whiptail") |> 
+  drop_na(total_length, weight)
+
+  
+whiptail_plot <- ggplot(data = whiptails, aes(x = weight, y = total_length)) +
+  geom_point(aes(color = sex)) +
+  theme(legend.position = "bottom") + 
+  theme_minimal()
+
+
+ggMarginal(whiptail_plot, type = "boxplot", groupColour = TRUE)
+
+# ggMarginal which is in the ggextra package - note that groupColour is with camel case and british 
+
+```
+
+
+## Patchwork plot
+
+```{r}
+
+((whiptail_bee + whiptail_plot) / whiptail_bee) & theme_dark()
+
+
+# Patchwork results give you programatic results to have plot panels side by side - 
 
 ```
 
